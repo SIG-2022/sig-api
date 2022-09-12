@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  name      String
+  industry  String
+  studio    String
+  features  String[]
+  devAmount  Int
+  maxBudget Float
+  endDate   DateTime
+  client    Client   @relation(fields: [clientId], references: [id])
+  state     STATE    @default(STARTED)
+  clientId  String
+}
+
+enum STATE {
+  CANCELLED
+  ACCEPTED
+  DELAYED
+  STARTED
+}
+
+model Client {
+  id      String    @id @default(uuid())
+  name    String
+  Project Project[]
+}
