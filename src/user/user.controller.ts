@@ -2,8 +2,11 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { User as UserModel } from '@prisma/client';
@@ -24,9 +27,29 @@ export class UserController {
     } else throw new BadRequestException('Invalid token');
   }
 
+  @Post('/register')
+  async register(@Body() userData: { email: string; password: string }) {
+    return this.userService.register(userData);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
-  async getUsers() {
-    return this.userService.users({});
+  async getUsers(@Request() req) {
+    if (req.user.role !== 'ADMIN') throw new BadRequestException();
+    return this.userService.users({ where: { enabled: false } });
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async deleteUser(@Param('id') id, @Request() req) {
+    if (req.user.role !== 'ADMIN') throw new BadRequestException();
+    return this.userService.deleteUser(id);
+  }
+
+  @Post(':id/accept')
+  @UseGuards(JwtAuthGuard)
+  async acceptUser(@Param('id') id, @Request() req) {
+    if (req.user.role !== 'ADMIN') throw new BadRequestException();
+    return this.userService.acceptUser(id);
   }
 }

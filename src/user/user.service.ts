@@ -48,9 +48,34 @@ export class UserService {
     });
   }
 
-  async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
+  async deleteUser(id: string) {
     return this.prisma.user.delete({
-      where,
+      where: {
+        id: id,
+      },
+    });
+  }
+
+  async acceptUser(id: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: id,
+      },
+    });
+
+    user.enabled = true;
+
+    return this.prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: user,
+    });
+  }
+
+  register(userData: { email: string; password: string }) {
+    return this.prisma.user.create({
+      data: userData,
     });
   }
 }
