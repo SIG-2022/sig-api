@@ -145,4 +145,42 @@ export class ProjectService {
       orderBy,
     });
   }
+
+  devs(params: {
+    skip?: number;
+    take?: number;
+    cursor?: Prisma.DeveloperWhereUniqueInput;
+    where?: Prisma.DeveloperWhereInput;
+    orderBy?: Prisma.DeveloperOrderByWithRelationInput;
+    include?: Prisma.DeveloperInclude;
+  }) {
+    const { skip, take, cursor, where, orderBy, include } = params;
+    return this.prisma.developer.findMany({
+      include,
+      skip,
+      take,
+      cursor,
+      where,
+      orderBy,
+    });
+  }
+
+  underSelection(params: {
+    skip?: number;
+    take?: number;
+    cursor?: Prisma.UnderSelectionDeveloperWhereUniqueInput;
+    where?: Prisma.UnderSelectionDeveloperWhereInput;
+    orderBy?: Prisma.UnderSelectionDeveloperOrderByWithRelationInput;
+    include?: Prisma.UnderSelectionDeveloperInclude;
+  }) {
+    const { skip, take, cursor, where, orderBy, include } = params;
+    return this.prisma.underSelectionDeveloper.findMany({
+      include,
+      skip,
+      take,
+      cursor,
+      where,
+      orderBy,
+    });
+  }
 }

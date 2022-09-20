@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -13,7 +12,6 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ProjectService } from './project.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Workbook } from 'exceljs';
 
 @Controller('project')
 export class ProjectController {
@@ -94,6 +92,26 @@ export class ProjectController {
   @UseGuards(JwtAuthGuard)
   async listPms() {
     return this.projectService.pms({
+      include: {
+        employee: true,
+      },
+    });
+  }
+
+  @Get('dev')
+  @UseGuards(JwtAuthGuard)
+  async listDevs() {
+    return this.projectService.devs({
+      include: {
+        employee: true,
+      },
+    });
+  }
+
+  @Get('under-selection')
+  @UseGuards(JwtAuthGuard)
+  async listUnderSelection() {
+    return this.projectService.underSelection({
       include: {
         employee: true,
       },
