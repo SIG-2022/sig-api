@@ -117,4 +117,10 @@ export class ProjectController {
       },
     });
   }
+
+  @Get('export-employee-excel')
+  @UseGuards(JwtAuthGuard)
+  async exportExcel() {
+    return this.projectService.exportExcel();
+  }
 }

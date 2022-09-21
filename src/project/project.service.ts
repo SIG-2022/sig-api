@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, Client, STATE } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExcelParser } from './excel.parser';
+import { ExcelWriter } from './excel.writer';
 
 @Injectable()
 export class ProjectService {
   constructor(
     private prisma: PrismaService,
     private excelParser: ExcelParser,
+    private excelWriter: ExcelWriter,
   ) {}
 
   async createProject(data: {
@@ -125,6 +127,10 @@ export class ProjectService {
 
   async parseExcel(file: Express.Multer.File) {
     await this.excelParser.parseExcel(file);
+  }
+
+  async exportExcel() {
+    return this.excelWriter.writeExcel();
   }
 
   pms(params: {
