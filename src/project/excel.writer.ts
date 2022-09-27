@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {BadRequestException, Injectable} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Workbook, Worksheet } from 'exceljs';
 import * as fs from 'fs';
+import { join } from 'path';
 
 @Injectable()
 export class ExcelWriter {
@@ -14,7 +15,9 @@ export class ExcelWriter {
     const devSheet = workbook.addWorksheet('Desarrolladores');
 
     const underSelectionSheet = workbook.addWorksheet('En selección');
-    return await workbook.xlsx.writeBuffer();
+    const filePath = join(__dirname, 'excelExport.xlsx');
+    await workbook.xlsx.writeFile(filePath);
+    return { data: fs.readFileSync(filePath).toString('base64') };
   }
 
   async addPms(worksheet: Worksheet) {
