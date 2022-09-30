@@ -35,6 +35,9 @@ model Project {
   client    Client   @relation(fields: [clientId], references: [id])
   state     STATE    @default(TEAM_ASSIGNMENT)
   clientId  String
+  pm        PM?       @relation(fields: [pmId], references: [id])
+  pmId      String?   @unique
+  devs      Employee[]
 }
 
 enum STATE {
@@ -59,6 +62,8 @@ model Employee {
   developer                 Developer?
   pm                        PM?
   underSelectionDeveloper   UnderSelectionDeveloper?
+  project                   Project? @relation(fields: [projectId], references: [id])
+  projectId                 String
 }
 
 model PM {
@@ -66,6 +71,7 @@ model PM {
   employee      Employee  @relation(fields: [employeeId], references: [id])
   employeeId    String  @unique
   features      String[]
+  project       Project?
 }
 
 model Developer {

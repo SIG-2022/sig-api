@@ -123,4 +123,16 @@ export class ProjectController {
   async exportExcel() {
     return this.projectService.exportExcel();
   }
+
+  @Post('assign-pm')
+  @UseGuards(JwtAuthGuard)
+  async assignPM(
+    @Body()
+    data: {
+      projectId: string;
+      pmId: string;
+    },
+  ) {
+    return this.projectService.assignPm(data);
+  }
 }

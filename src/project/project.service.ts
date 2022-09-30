@@ -189,4 +189,18 @@ export class ProjectService {
       orderBy,
     });
   }
+
+  async assignPm(data: { projectId: string; pmId: string }) {
+    const project = await this.prisma.project.findFirst({
+      where: { id: data.projectId },
+    });
+    const pm = await this.prisma.pM.findFirst({
+      where: { id: data.pmId },
+    });
+    return this.prisma.project.update({
+      where: { id: data.projectId },
+      data: { ...project },
+    });
+    return Promise.resolve(undefined);
+  }
 }
