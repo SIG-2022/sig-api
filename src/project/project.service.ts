@@ -205,34 +205,41 @@ export class ProjectService {
     });
     if (!pm) throw new BadRequestException('PM not found');
 
-    const devs = await this.prisma.employee.findMany({
+    const devs = await this.prisma.developer.findMany({
       where: { id: { in: data.devs } },
     });
     if (devs.length !== data.devs.length)
       throw new BadRequestException('Bad devs ids');
 
-    const underSelection = await this.prisma.employee.findMany({
+    const underSelection = await this.prisma.underSelectionDeveloper.findMany({
       where: { id: { in: data.underSelection } },
     });
 
     if (underSelection.length !== data.underSelection.length)
       throw new BadRequestException('Bad underSelection ids');
 
-    const employees = devs.concat(underSelection).map((emp) => {
-      return {
-        id: emp.id,
-      };
-    });
-    if (employees.length > 0) {
+    if (devs.length > 0) {
       return this.prisma.project.update({
         where: { id: data.projectId },
         data: {
           pmId: data.pmId ? data.pmId : project.pmId,
-          devs: { connect: employees },
+          devs: { connect: devs },
           ...project,
         },
       });
     }
+    if (underSelection.length > 0) {
+      return this.prisma.project.update({
+        where: { id: data.projectId },
+        data: {
+          pmId: data.pmId ? data.pmId : project.pmId,
+          devs: { connect: devs },
+          underSelection: { connect: underSelection },
+          ...project,
+        },
+      });
+    }
+
     return this.prisma.project.update({
       where: { id: data.projectId },
       data: {

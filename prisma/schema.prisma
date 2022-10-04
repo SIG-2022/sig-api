@@ -24,20 +24,21 @@ enum ROLE {
 }
 
 model Project {
-  id        String   @id @default(uuid())
-  name      String
-  industry  String
-  studio    String
-  features  String[]
-  devAmount Int
-  maxBudget Float
-  endDate   DateTime
-  client    Client   @relation(fields: [clientId], references: [id])
-  state     STATE    @default(TEAM_ASSIGNMENT)
-  clientId  String
-  pm        PM?       @relation(fields: [pmId], references: [id])
-  pmId      String?   @unique
-  devs      Employee[]
+  id             String   @id @default(uuid())
+  name           String
+  industry       String
+  studio         String
+  features       String[]
+  devAmount      Int
+  maxBudget      Float
+  endDate        DateTime
+  client         Client   @relation(fields: [clientId], references: [id])
+  state          STATE    @default(TEAM_ASSIGNMENT)
+  clientId       String
+  pm             PM?       @relation(fields: [pmId], references: [id])
+  pmId           String?   @unique
+  devs           Developer[]
+  underSelection UnderSelectionDeveloper[]
 }
 
 enum STATE {
@@ -62,8 +63,6 @@ model Employee {
   developer                 Developer?
   pm                        PM?
   underSelectionDeveloper   UnderSelectionDeveloper?
-  project                   Project? @relation(fields: [projectId], references: [id])
-  projectId                 String
 }
 
 model PM {
@@ -79,6 +78,8 @@ model Developer {
   employee      Employee  @relation(fields: [employeeId], references: [id])
   employeeId    String  @unique
   technologies  String[]
+  project       Project? @relation(fields: [projectId], references: [id])
+  projectId     String
 }
 
 model UnderSelectionDeveloper {
@@ -86,4 +87,6 @@ model UnderSelectionDeveloper {
   employee      Employee  @relation(fields: [employeeId], references: [id])
   employeeId    String  @unique
   selectionEnd  DateTime
+  project       Project? @relation(fields: [projectId], references: [id])
+  projectId     String
 }
