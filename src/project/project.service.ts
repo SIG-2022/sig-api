@@ -208,44 +208,31 @@ export class ProjectService {
     const devs = await this.prisma.developer.findMany({
       where: { id: { in: data.devs } },
     });
-    if (devs.length !== data.devs.length)
+    let body = {
+      pmId: data.pmId ? data.pmId : project.pmId,
+      devs: undefined, //TODO check if undefined modifies devs list or remains unchanged
+      underSelection: undefined,
+    };
+
+    if (devs.length !== data.devs.length) {
       throw new BadRequestException('Bad devs ids');
+    } else {
+      body = { devs: devs, ...body };
+    }
 
     const underSelection = await this.prisma.underSelectionDeveloper.findMany({
       where: { id: { in: data.underSelection } },
     });
 
-    if (underSelection.length !== data.underSelection.length)
+    if (underSelection.length !== data.underSelection.length) {
       throw new BadRequestException('Bad underSelection ids');
-
-    if (devs.length > 0) {
-      return this.prisma.project.update({
-        where: { id: data.projectId },
-        data: {
-          pmId: data.pmId ? data.pmId : project.pmId,
-          devs: { connect: devs },
-          ...project,
-        },
-      });
-    }
-    if (underSelection.length > 0) {
-      return this.prisma.project.update({
-        where: { id: data.projectId },
-        data: {
-          pmId: data.pmId ? data.pmId : project.pmId,
-          devs: { connect: devs },
-          underSelection: { connect: underSelection },
-          ...project,
-        },
-      });
+    } else {
+      body = { underSelection: underSelection, ...body };
     }
 
     return this.prisma.project.update({
       where: { id: data.projectId },
-      data: {
-        pmId: data.pmId ? data.pmId : project.pmId,
-        ...project,
-      },
+      data: body,
     });
   }
 }
