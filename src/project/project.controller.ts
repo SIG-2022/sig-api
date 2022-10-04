@@ -124,15 +124,17 @@ export class ProjectController {
     return this.projectService.exportExcel();
   }
 
-  @Post('assign-pm')
+  @Post('assign-team')
   @UseGuards(JwtAuthGuard)
   async assignPM(
     @Body()
     data: {
       projectId: string;
       pmId: string;
+      devs: string[];
+      underSelection: string[];
     },
   ) {
-    return this.projectService.assignPm(data);
+    return this.projectService.assignTeam(data);
   }
 }

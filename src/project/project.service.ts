@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, Client, STATE } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExcelParser } from './excel.parser';
@@ -190,17 +190,55 @@ export class ProjectService {
     });
   }
 
-  async assignPm(data: { projectId: string; pmId: string }) {
+  async assignTeam(data: {
+    projectId: string;
+    pmId: string;
+    devs: string[];
+    underSelection: string[];
+  }) {
     const project = await this.prisma.project.findFirst({
       where: { id: data.projectId },
     });
+
     const pm = await this.prisma.pM.findFirst({
       where: { id: data.pmId },
     });
+    if (!pm) throw new BadRequestException('PM not found');
+
+    const devs = await this.prisma.employee.findMany({
+      where: { id: { in: data.devs } },
+    });
+    if (devs.length !== data.devs.length)
+      throw new BadRequestException('Bad devs ids');
+
+    const underSelection = await this.prisma.employee.findMany({
+      where: { id: { in: data.underSelection } },
+    });
+
+    if (underSelection.length !== data.underSelection.length)
+      throw new BadRequestException('Bad underSelection ids');
+
+    const employees = devs.concat(underSelection).map((emp) => {
+      return {
+        id: emp.id,
+      };
+    });
+    if (employees.length > 0) {
+      return this.prisma.project.update({
+        where: { id: data.projectId },
+        data: {
+          pmId: data.pmId ? data.pmId : project.pmId,
+          devs: { connect: employees },
+          ...project,
+        },
+      });
+    }
     return this.prisma.project.update({
       where: { id: data.projectId },
-      data: { ...project },
+      data: {
+        pmId: data.pmId ? data.pmId : project.pmId,
+        ...project,
+      },
     });
-    return Promise.resolve(undefined);
   }
 }
