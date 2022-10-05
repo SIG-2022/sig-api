@@ -196,21 +196,33 @@ export class ProjectService {
     devs: string[];
     underSelection: string[];
   }) {
-    const project = await this.prisma.project.findFirst({
-      where: { id: data.projectId },
-    });
+    await this.prisma.project
+      .findFirst({
+        where: { id: data.projectId },
+      })
+      .catch(() => {
+        throw new BadRequestException('Project not found');
+      });
 
-    const pm = await this.prisma.pM.findFirst({
-      where: { id: data.pmId },
-    });
-    if (!pm) throw new BadRequestException('PM not found');
+    await this.prisma.pM
+      .findFirst({
+        where: { id: data.pmId },
+      })
+      .catch(() => {
+        throw new BadRequestException('PM not found');
+      });
 
-    const devs = await this.prisma.developer.findMany({
-      where: { id: { in: data.devs } },
-    });
+    const devs = await this.prisma.developer
+      .findMany({
+        where: { id: { in: data.devs } },
+      })
+      .catch(() => {
+        throw new BadRequestException('Dev not found');
+      });
+
     let body = {
-      pmId: data.pmId ? data.pmId : project.pmId,
-      devs: undefined, //TODO check if undefined modifies devs list or remains unchanged
+      pmId: data.pmId ? data.pmId : undefined,
+      devs: undefined,
       underSelection: undefined,
     };
 
@@ -220,9 +232,13 @@ export class ProjectService {
       body = { devs: devs, ...body };
     }
 
-    const underSelection = await this.prisma.underSelectionDeveloper.findMany({
-      where: { id: { in: data.underSelection } },
-    });
+    const underSelection = await this.prisma.underSelectionDeveloper
+      .findMany({
+        where: { id: { in: data.underSelection } },
+      })
+      .catch(() => {
+        throw new BadRequestException('Under selection not found');
+      });
 
     if (underSelection.length !== data.underSelection.length) {
       throw new BadRequestException('Bad underSelection ids');
