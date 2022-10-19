@@ -32,6 +32,7 @@ model Project {
   devAmount      Int
   maxBudget      Float
   endDate        DateTime
+  startDate      DateTime
   client         Client   @relation(fields: [clientId], references: [id])
   state          STATE    @default(TEAM_ASSIGNMENT)
   clientId       String
@@ -39,6 +40,7 @@ model Project {
   pmId           String?   @unique
   devs           Developer[]
   underSelection UnderSelectionDeveloper[]
+  requirement    String
 }
 
 enum STATE {
@@ -50,19 +52,31 @@ enum STATE {
 }
 
 model Client {
-  id      String    @id @default(uuid())
-  name    String
-  Project Project[]
+  id            String    @id @default(uuid())
+  name          String
+  Project       Project[]
+  cuit          Int
+  location      String
+  industry      String
+  pastProjects  String[]
+  email         String
+  phone         String
 }
 
 model Employee {
   id                        String  @id @default(uuid())
   name                      String
+  surname                   String
+  phone                     String
   salary                    Float
   availableDate             DateTime
+  location                  String
   developer                 Developer?
   pm                        PM?
   underSelectionDeveloper   UnderSelectionDeveloper?
+  type                      EMPLOYEE_TYPE
+  seniority                 Int
+  career                    String
 }
 
 model PM {
@@ -71,6 +85,7 @@ model PM {
   employeeId    String  @unique
   features      String[]
   project       Project?
+  projectCount  Int
 }
 
 model Developer {
@@ -79,7 +94,8 @@ model Developer {
   employeeId    String  @unique
   technologies  String[]
   project       Project? @relation(fields: [projectId], references: [id])
-  projectId     String
+  projectId     String?
+  certificates  String[]
 }
 
 model UnderSelectionDeveloper {
@@ -87,6 +103,15 @@ model UnderSelectionDeveloper {
   employee      Employee  @relation(fields: [employeeId], references: [id])
   employeeId    String  @unique
   selectionEnd  DateTime
+  technologies  String[]
   project       Project? @relation(fields: [projectId], references: [id])
-  projectId     String
+  projectId     String?
+  currentJob    String
+  selectionStep String
+}
+
+enum EMPLOYEE_TYPE {
+  PM
+  DEV
+  UNDER_SELECTION
 }

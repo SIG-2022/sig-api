@@ -21,19 +21,14 @@ export class ProjectService {
     devAmount: number;
     maxBudget: number;
     endDate: Date;
+    startDate: Date;
+    requirement: string;
   }) {
-    data.endDate = new Date();
-    data.client = data.client.value
-      ? {
-          connect: {
-            id: data.client.value,
-          },
-        }
-      : {
-          create: {
-            name: data.client.label,
-          },
-        };
+    data.client = {
+      connect: {
+        id: data.client.value,
+      },
+    };
 
     return this.prisma.project.create({
       data,
@@ -50,19 +45,15 @@ export class ProjectService {
     devAmount: number;
     maxBudget: number;
     endDate: Date;
+    startDate: Date;
+    requirement: string;
   }) {
     data.endDate = new Date();
-    data.client = data.client.value
-      ? {
-          connect: {
-            id: data.client.value,
-          },
-        }
-      : {
-          create: {
-            name: data.client.label,
-          },
-        };
+    data.client = {
+      connect: {
+        id: data.client.value,
+      },
+    };
 
     return this.prisma.project.update({
       where: {
@@ -196,7 +187,7 @@ export class ProjectService {
     devs: string[];
     underSelection: string[];
   }) {
-    await this.prisma.project
+    const proj = await this.prisma.project
       .findFirst({
         where: { id: data.projectId },
       })
@@ -224,6 +215,7 @@ export class ProjectService {
       pmId: data.pmId ? data.pmId : undefined,
       devs: undefined,
       underSelection: undefined,
+      state: proj.state,
     };
 
     if (devs.length !== data.devs.length) {
@@ -231,6 +223,13 @@ export class ProjectService {
     } else {
       body = { devs: devs, ...body };
     }
+
+    devs.forEach(async (dev) => {
+      await this.prisma.developer.update({
+        where: { id: dev.employeeId },
+        data: { ...dev, projectId: data.projectId },
+      });
+    });
 
     const underSelection = await this.prisma.underSelectionDeveloper
       .findMany({
@@ -246,9 +245,40 @@ export class ProjectService {
       body = { underSelection: underSelection, ...body };
     }
 
+    underSelection.forEach(async (select) => {
+      await this.prisma.underSelectionDeveloper.update({
+        where: { id: select.employeeId },
+        data: { ...select, projectId: data.projectId },
+      });
+    });
+
+    if (underSelection.length + devs.length === proj.devAmount) {
+      body = { ...body, state: STATE.ACCEPTED };
+    }
+
     return this.prisma.project.update({
       where: { id: data.projectId },
       data: body,
+    });
+  }
+
+  createClient(data: {
+    name: string;
+    cuit: number;
+    location: string;
+    industry: string;
+    email: string;
+    phone: string;
+  }) {
+    return this.prisma.client.create({
+      data: {
+        name: data.name,
+        cuit: data.cuit,
+        location: data.location,
+        industry: data.industry,
+        email: data.email,
+        phone: data.phone,
+      },
     });
   }
 }

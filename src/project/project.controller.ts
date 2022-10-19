@@ -30,6 +30,8 @@ export class ProjectController {
       devAmount: number;
       maxBudget: number;
       endDate: Date;
+      startDate: Date;
+      requirement: string;
     },
   ) {
     return this.projectService.createProject(data);
@@ -49,6 +51,8 @@ export class ProjectController {
       devAmount: number;
       maxBudget: number;
       endDate: Date;
+      startDate: Date;
+      requirement: string;
     },
   ) {
     return this.projectService.updateProject(data);
@@ -59,6 +63,15 @@ export class ProjectController {
   async listProject() {
     return this.projectService.projects({
       include: {
+        devs: {
+          include: { employee: true },
+        },
+        underSelection: {
+          include: { employee: true },
+        },
+        pm: {
+          include: { employee: true },
+        },
         client: {
           select: {
             id: true,
@@ -136,5 +149,21 @@ export class ProjectController {
     },
   ) {
     return this.projectService.assignTeam(data);
+  }
+
+  @Post('client')
+  @UseGuards(JwtAuthGuard)
+  async createClient(
+    @Body()
+    data: {
+      name: string;
+      cuit: number;
+      location: string;
+      industry: string;
+      email: string;
+      phone: string;
+    },
+  ) {
+    return this.projectService.createClient(data);
   }
 }
