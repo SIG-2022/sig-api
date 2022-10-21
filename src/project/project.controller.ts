@@ -32,6 +32,7 @@ export class ProjectController {
       endDate: Date;
       startDate: Date;
       requirement: string;
+      creationDate: Date;
     },
   ) {
     return this.projectService.createProject(data);

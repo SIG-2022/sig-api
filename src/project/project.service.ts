@@ -23,6 +23,7 @@ export class ProjectService {
     endDate: Date;
     startDate: Date;
     requirement: string;
+    creationDate: Date;
   }) {
     data.client = {
       connect: {
@@ -30,12 +31,33 @@ export class ProjectService {
       },
     };
 
-    return this.prisma.project.create({
+    data.creationDate = new Date();
+
+    const project = await this.prisma.project.create({
       data,
     });
+
+    const client = await this.prisma.client.findFirst({
+      where: {
+        id: data.client.value,
+      },
+    });
+
+    client.pastProjects.push(project.id);
+
+    await this.prisma.client.update({
+      where: {
+        id: client.id,
+      },
+      data: {
+        ...client,
+      },
+    });
+
+    return project;
   }
 
-  updateProject(data: {
+  async updateProject(data: {
     id: string;
     name: string;
     industry: string;
@@ -54,6 +76,24 @@ export class ProjectService {
         id: data.client.value,
       },
     };
+
+    const client = await this.prisma.client.findFirst({
+      where: {
+        id: data.client.value,
+      },
+    });
+
+    if (!client.pastProjects.includes(data.id))
+      client.pastProjects.push(data.id);
+
+    await this.prisma.client.update({
+      where: {
+        id: client.id,
+      },
+      data: {
+        ...client,
+      },
+    });
 
     return this.prisma.project.update({
       where: {
@@ -105,6 +145,8 @@ export class ProjectService {
         id: id,
       },
     });
+    // Rechazo → Si no hay asignacion de pm → pmDelayCancel
+    if (!project.pmId) project.pmDelayCancel = true;
 
     project.state = STATE.CANCELLED;
 
@@ -194,6 +236,10 @@ export class ProjectService {
       .catch(() => {
         throw new BadRequestException('Project not found');
       });
+    const date = proj.creationDate;
+    date.setDate(date.getDate() + 1);
+    const delayPass = date < new Date();
+    //Assign pm → (Si fechaCreacion + 1 dia < currentTime) = pmDelayedPass
 
     await this.prisma.pM
       .findFirst({
@@ -211,11 +257,29 @@ export class ProjectService {
         throw new BadRequestException('Dev not found');
       });
 
+    const projectDevs = await this.prisma.developer.findMany({
+      where: { projectId: proj.id },
+    });
+
+    // No devs previously assigned and assigned now --> firstDevTime set
+    const firstDevAssignDate =
+      data.devs.length > 0 && projectDevs.length === 0 ? new Date() : undefined;
+
+    // All devs assigned --> lastDevTime set
+    const lastDevAssignDate =
+      data.devs.length + data.underSelection.length === proj.devAmount
+        ? new Date()
+        : undefined;
+
     let body = {
       pmId: data.pmId ? data.pmId : undefined,
+      pmAssignDate: data.pmId ? new Date() : undefined,
+      firstDevAssignDate: firstDevAssignDate,
+      lastDevAssignDate: lastDevAssignDate,
       devs: undefined,
       underSelection: undefined,
       state: proj.state,
+      pmDelayPass: delayPass,
     };
 
     if (devs.length !== data.devs.length) {

@@ -24,23 +24,29 @@ enum ROLE {
 }
 
 model Project {
-  id             String   @id @default(uuid())
-  name           String
-  industry       String
-  studio         String
-  features       String[]
-  devAmount      Int
-  maxBudget      Float
-  endDate        DateTime
-  startDate      DateTime
-  client         Client   @relation(fields: [clientId], references: [id])
-  state          STATE    @default(TEAM_ASSIGNMENT)
-  clientId       String
-  pm             PM?       @relation(fields: [pmId], references: [id])
-  pmId           String?   @unique
-  devs           Developer[]
-  underSelection UnderSelectionDeveloper[]
-  requirement    String
+  id                 String   @id @default(uuid())
+  name               String
+  industry           String
+  studio             String
+  features           String[]
+  devAmount          Int
+  maxBudget          Float
+  endDate            DateTime
+  startDate          DateTime
+  client             Client   @relation(fields: [clientId], references: [id])
+  state              STATE    @default(TEAM_ASSIGNMENT)
+  clientId           String
+  pm                 PM?       @relation(fields: [pmId], references: [id])
+  pmId               String?   @unique
+  devs               Developer[]
+  underSelection     UnderSelectionDeveloper[]
+  requirement        String
+  pmAssignDate       DateTime?
+  firstDevAssignDate DateTime?
+  lastDevAssignDate  DateTime?
+  creationDate       DateTime @default(now())
+  pmDelayPass        Boolean?
+  pmDelayCancel      Boolean?
 }
 
 enum STATE {
