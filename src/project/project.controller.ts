@@ -167,4 +167,22 @@ export class ProjectController {
   ) {
     return this.projectService.createClient(data);
   }
+
+  @Post('send/:id')
+  @UseGuards(JwtAuthGuard)
+  async sendToClient(@Param('id') id) {
+    return this.projectService.sendToClient(id);
+  }
+
+  @Post('reject/:id')
+  @UseGuards(JwtAuthGuard)
+  async rejectedByClient(@Param('id') id) {
+    return this.projectService.clientRejected(id);
+  }
+
+  @Post('accept/:id')
+  @UseGuards(JwtAuthGuard)
+  async acceptedByClient(@Param('id') id) {
+    return this.projectService.clientAccepted(id);
+  }
 }

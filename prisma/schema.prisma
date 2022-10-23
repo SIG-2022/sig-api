@@ -47,14 +47,16 @@ model Project {
   creationDate       DateTime @default(now())
   pmDelayPass        Boolean?
   pmDelayCancel      Boolean?
+  sentCount          Int @default(0)
 }
 
 enum STATE {
   TEAM_ASSIGNMENT
   CANCELLED
   ACCEPTED
-  DELAYED
-  STARTED
+  TEAM_ASSIGNED
+  SENT_TO_CLIENT
+  REJECTED_BY_CLIENT
 }
 
 model Client {

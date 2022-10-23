@@ -317,7 +317,7 @@ export class ProjectService {
     });
 
     if (underSelection.length + devs.length === proj.devAmount) {
-      body = { ...body, state: STATE.ACCEPTED };
+      body = { ...body, state: STATE.TEAM_ASSIGNED };
     }
 
     return this.prisma.project.update({
@@ -343,6 +343,27 @@ export class ProjectService {
         email: data.email,
         phone: data.phone,
       },
+    });
+  }
+
+  async sendToClient(id: string) {
+    return await this.prisma.project.update({
+      where: { id: id },
+      data: { state: STATE.SENT_TO_CLIENT, sentCount: { increment: 1 } },
+    });
+  }
+
+  async clientRejected(id: string) {
+    return await this.prisma.project.update({
+      where: { id: id },
+      data: { state: STATE.REJECTED_BY_CLIENT },
+    });
+  }
+
+  async clientAccepted(id: string) {
+    return await this.prisma.project.update({
+      where: { id: id },
+      data: { state: STATE.ACCEPTED },
     });
   }
 }
