@@ -149,6 +149,7 @@ export class ProjectService {
     if (!project.pmId) project.pmDelayCancel = true;
 
     project.state = STATE.CANCELLED;
+    project.cancelDate = new Date();
 
     return this.prisma.project.update({
       where: {
@@ -349,21 +350,32 @@ export class ProjectService {
   async sendToClient(id: string) {
     return await this.prisma.project.update({
       where: { id: id },
-      data: { state: STATE.SENT_TO_CLIENT, sentCount: { increment: 1 } },
+      data: {
+        state: STATE.SENT_TO_CLIENT,
+        sentCount: { increment: 1 },
+        sentDates: {
+          push: new Date(),
+        },
+      },
     });
   }
 
   async clientRejected(id: string) {
     return await this.prisma.project.update({
       where: { id: id },
-      data: { state: STATE.REJECTED_BY_CLIENT },
+      data: {
+        state: STATE.REJECTED_BY_CLIENT,
+        rejectDates: {
+          push: new Date(),
+        },
+      },
     });
   }
 
   async clientAccepted(id: string) {
     return await this.prisma.project.update({
       where: { id: id },
-      data: { state: STATE.ACCEPTED },
+      data: { state: STATE.ACCEPTED, acceptDate: new Date() },
     });
   }
 }

@@ -48,6 +48,10 @@ model Project {
   pmDelayPass        Boolean?
   pmDelayCancel      Boolean?
   sentCount          Int @default(0)
+  cancelDate         DateTime?
+  acceptDate         DateTime?
+  sentDates          DateTime[]
+  rejectDates        DateTime[]
 }
 
 enum STATE {
