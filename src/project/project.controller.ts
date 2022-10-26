@@ -106,8 +106,12 @@ export class ProjectController {
   @UseGuards(JwtAuthGuard)
   async listPms() {
     return this.projectService.pms({
+      where: {
+        project: null,
+      },
       include: {
         employee: true,
+        project: true,
       },
     });
   }
@@ -116,8 +120,12 @@ export class ProjectController {
   @UseGuards(JwtAuthGuard)
   async listDevs() {
     return this.projectService.devs({
+      where: {
+        project: null,
+      },
       include: {
         employee: true,
+        project: true,
       },
     });
   }
@@ -126,8 +134,12 @@ export class ProjectController {
   @UseGuards(JwtAuthGuard)
   async listUnderSelection() {
     return this.projectService.underSelection({
+      where: {
+        project: null,
+      },
       include: {
         employee: true,
+        project: true,
       },
     });
   }
