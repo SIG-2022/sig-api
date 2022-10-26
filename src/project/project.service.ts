@@ -3,6 +3,7 @@ import { Prisma, Client, STATE } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ExcelParser } from './excel.parser';
 import { ExcelWriter } from './excel.writer';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class ProjectService {
@@ -151,12 +152,79 @@ export class ProjectService {
     project.state = STATE.CANCELLED;
     project.cancelDate = new Date();
 
+    await this.clearEmployees(project);
+
     return this.prisma.project.update({
       where: {
         id: id,
       },
       data: project,
     });
+  }
+
+  private async clearEmployees(project: any) {
+    // clear old employees
+    if (project.pmId) {
+      await this.prisma.pM.update({
+        where: {
+          id: project.pmId,
+        },
+        data: {
+          project: null,
+          employee: {
+            update: {
+              availableDate: new Date(),
+            },
+          },
+        },
+      });
+    }
+
+    const devs = await this.prisma.developer.findMany({
+      where: {
+        projectId: project.id,
+      },
+    });
+
+    const underSelection = await this.prisma.underSelectionDeveloper.findMany({
+      where: {
+        projectId: project.id,
+      },
+    });
+
+    await Promise.all(
+      devs.map(async (dev) => {
+        await this.prisma.developer.update({
+          where: {
+            id: dev.id,
+          },
+          data: {
+            employee: {
+              update: {
+                availableDate: new Date(),
+              },
+            },
+          },
+        });
+      }),
+    );
+
+    await Promise.all(
+      underSelection.map(async (und) => {
+        await this.prisma.underSelectionDeveloper.update({
+          where: {
+            id: und.id,
+          },
+          data: {
+            employee: {
+              update: {
+                availableDate: new Date(),
+              },
+            },
+          },
+        });
+      }),
+    );
   }
 
   async parseExcel(file: Express.Multer.File) {
@@ -377,5 +445,22 @@ export class ProjectService {
       where: { id: id },
       data: { state: STATE.ACCEPTED, acceptDate: new Date() },
     });
+  }
+
+  @Cron('59 58 23 * * *')
+  async clearFinishedProjectEmployees() {
+    console.log('Clearing done project employees...');
+    const finishedProjects = await this.prisma.project.findMany({
+      where: {
+        state: STATE.ACCEPTED,
+        endDate: { lte: new Date() },
+      },
+    });
+    await Promise.all(
+      finishedProjects.map(async (proj) => {
+        await this.clearEmployees(proj);
+      }),
+    );
+    console.log('Finished clearing done project employees...');
   }
 }
