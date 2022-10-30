@@ -197,4 +197,10 @@ export class ProjectController {
   async acceptedByClient(@Param('id') id) {
     return this.projectService.clientAccepted(id);
   }
+
+  @Get('indicators')
+  @UseGuards(JwtAuthGuard)
+  async getIndicators() {
+    return this.projectService.indicators();
+  }
 }

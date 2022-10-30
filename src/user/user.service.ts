@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { User, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -74,6 +74,12 @@ export class UserService {
   }
 
   register(userData: { email: string; password: string }) {
+    const existing = this.prisma.user.findFirst({
+      where: {
+        email: userData.email,
+      },
+    });
+    if (existing) throw new BadRequestException('Email en uso');
     return this.prisma.user.create({
       data: userData,
     });

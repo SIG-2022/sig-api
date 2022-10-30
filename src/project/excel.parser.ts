@@ -125,6 +125,7 @@ export class ExcelParser {
       'fecha finalizacion',
       'end date',
     ];
+    const startDates = ['fecha inicio'];
     const features = [
       'features',
       'characteristics',
@@ -149,6 +150,7 @@ export class ExcelParser {
       projectCount: undefined,
       currentJob: undefined,
       selectionStep: undefined,
+      selectionStart: undefined,
     };
     worksheet.getRow(top).eachCell((header, col) => {
       switch (true) {
@@ -193,6 +195,9 @@ export class ExcelParser {
           break;
         case features.includes(header.value.toString().toLowerCase()):
           headers = { ...headers, features: col };
+          break;
+        case startDates.includes(header.value.toString().toLowerCase()):
+          headers = { ...headers, selectionStart: col };
           break;
         default:
           break;
@@ -287,9 +292,14 @@ export class ExcelParser {
     const selectionStep =
       headers.selectionStep && worksheetRow.getCell(headers.selectionStep);
 
+    const selectionStart =
+      headers.selectionStart &&
+      worksheetRow.getCell(headers.selectionStart).value;
+
     const data = {
       id: employee.id,
       selectionEnd: availableDate,
+      selectionStart: selectionStart,
       technologies: technologiesList,
       currentJob: currentJob.value.toString(),
       selectionStep: selectionStep.value.toString(),
@@ -303,6 +313,7 @@ export class ExcelParser {
     const updateData = {
       id: employee.id,
       selectionEnd: availableDate,
+      selectionStart: selectionStart,
       technologies: technologiesList,
       currentJob: currentJob.value.toString(),
       selectionStep: selectionStep.value.toString(),

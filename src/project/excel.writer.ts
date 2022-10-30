@@ -103,7 +103,8 @@ export class ExcelWriter {
         'nombre',
         'apellido',
         'salario',
-        'fecha',
+        'fecha inicio',
+        'fecha fin',
         'telefono',
         'ubicacion',
         'carrera',
@@ -113,23 +114,24 @@ export class ExcelWriter {
       ])
       .commit();
 
-    const devs = await this.prisma.underSelectionDeveloper.findMany({
+    const underSelection = await this.prisma.underSelectionDeveloper.findMany({
       include: { employee: true },
     });
-    devs.forEach((dev) => {
+    underSelection.forEach((und) => {
       underSelectionSheet
         .addRow([
-          dev.id,
-          dev.employee.name,
-          dev.employee.surname,
-          dev.employee.salary,
-          dev.selectionEnd,
-          dev.employee.phone,
-          dev.employee.location,
-          dev.employee.career,
-          dev.technologies.toString(),
-          dev.currentJob,
-          dev.selectionStep,
+          und.id,
+          und.employee.name,
+          und.employee.surname,
+          und.employee.salary,
+          und.selectionStart,
+          und.selectionEnd,
+          und.employee.phone,
+          und.employee.location,
+          und.employee.career,
+          und.technologies.toString(),
+          und.currentJob,
+          und.selectionStep,
         ])
         .commit();
     });

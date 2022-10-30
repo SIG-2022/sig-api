@@ -45,7 +45,7 @@ model Project {
   firstDevAssignDate DateTime?
   lastDevAssignDate  DateTime?
   creationDate       DateTime @default(now())
-  pmDelayPass        Boolean?
+  hadDelay           Boolean?
   pmDelayCancel      Boolean?
   sentCount          Int @default(0)
   cancelDate         DateTime?
@@ -111,15 +111,16 @@ model Developer {
 }
 
 model UnderSelectionDeveloper {
-  id            String  @id @default(uuid())
-  employee      Employee  @relation(fields: [employeeId], references: [id])
-  employeeId    String  @unique
-  selectionEnd  DateTime
-  technologies  String[]
-  project       Project? @relation(fields: [projectId], references: [id])
-  projectId     String?
-  currentJob    String
-  selectionStep String
+  id             String  @id @default(uuid())
+  employee       Employee  @relation(fields: [employeeId], references: [id])
+  employeeId     String  @unique
+  selectionEnd   DateTime
+  technologies   String[]
+  project        Project? @relation(fields: [projectId], references: [id])
+  projectId      String?
+  currentJob     String
+  selectionStep  String
+  selectionStart DateTime @default(now())
 }
 
 enum EMPLOYEE_TYPE {
