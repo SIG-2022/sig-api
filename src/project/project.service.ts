@@ -149,6 +149,13 @@ export class ProjectService {
 
   async cancelProject(id) {
     const project = await this.prisma.project.findFirst({
+      include: {
+        pm: {
+          include: {
+            employee: true,
+          },
+        },
+      },
       where: {
         id: id,
       },
@@ -184,31 +191,45 @@ export class ProjectService {
       if (sel.employee.availableDate > new Date()) project.pmDelayCancel = true;
     });
 
-    project.state = STATE.CANCELLED;
-    project.cancelDate = new Date();
-
+    const del = project.pmDelayCancel;
     await this.clearEmployees(project);
 
     return this.prisma.project.update({
       where: {
         id: id,
       },
-      data: project,
+      data: {
+        pmDelayCancel: del,
+        state: STATE.CANCELLED,
+        cancelDate: new Date(),
+      },
     });
   }
 
   private async clearEmployees(project: any) {
+    const pmId = project.pmId;
+    const pm = project.pm;
+    project = await this.prisma.project.update({
+      where: {
+        id: project.id,
+      },
+      data: {
+        pmId: null,
+      },
+    });
     // clear old employees
-    if (project.pmId) {
+    if (pmId) {
       await this.prisma.pM.update({
         where: {
-          id: project.pmId,
+          id: pmId,
         },
         data: {
-          project: null,
           employee: {
             update: {
-              availableDate: new Date(),
+              availableDate:
+                project.state !== STATE.TEAM_ASSIGNMENT
+                  ? new Date()
+                  : pm.employee.availableDate,
             },
           },
         },
@@ -216,12 +237,18 @@ export class ProjectService {
     }
 
     const devs = await this.prisma.developer.findMany({
+      include: {
+        employee: true,
+      },
       where: {
         projectId: project.id,
       },
     });
 
     const underSelection = await this.prisma.underSelectionDeveloper.findMany({
+      include: {
+        employee: true,
+      },
       where: {
         projectId: project.id,
       },
@@ -236,9 +263,20 @@ export class ProjectService {
           data: {
             employee: {
               update: {
-                availableDate: new Date(),
+                availableDate:
+                  project.state !== STATE.TEAM_ASSIGNMENT
+                    ? new Date()
+                    : dev.employee.availableDate,
               },
             },
+          },
+        });
+        await this.prisma.developer.update({
+          where: {
+            id: dev.id,
+          },
+          data: {
+            projectId: null,
           },
         });
       }),
@@ -253,13 +291,25 @@ export class ProjectService {
           data: {
             employee: {
               update: {
-                availableDate: new Date(),
+                availableDate:
+                  project.state !== STATE.TEAM_ASSIGNMENT
+                    ? new Date()
+                    : und.employee.availableDate,
               },
             },
           },
         });
+        await this.prisma.underSelectionDeveloper.update({
+          where: {
+            id: und.id,
+          },
+          data: {
+            projectId: null,
+          },
+        });
       }),
     );
+    return project;
   }
 
   async parseExcel(file: Express.Multer.File) {
@@ -504,6 +554,13 @@ export class ProjectService {
   async clearFinishedProjectEmployees() {
     console.log('Clearing done project employees...');
     const finishedProjects = await this.prisma.project.findMany({
+      include: {
+        pm: {
+          include: {
+            employee: true,
+          },
+        },
+      },
       where: {
         state: STATE.ACCEPTED,
         endDate: { lte: new Date() },
@@ -572,6 +629,7 @@ export class ProjectService {
   }
 
   daysDifference(date1, date2) {
+    if (!date1 || !date2) return 0;
     return Math.abs(date2.getTime() - date1.getTime()) / (1000 * 3600 * 24);
   }
 
@@ -589,16 +647,26 @@ export class ProjectService {
     ];
 
     const monthProjects = await this.prisma.project.findMany({
+      include: {
+        pm: {
+          include: {
+            employee: true,
+          },
+        },
+      },
       where: {
-        OR: monthConditions,
+        AND: [{ state: { not: STATE.CANCELLED } }, { OR: monthConditions }],
       },
     });
 
     const IDPM_valid = monthProjects.filter((proj) => proj.pmAssignDate);
     const IDPM =
       IDPM_valid.map((proj) => {
-        return this.daysDifference(proj.pmAssignDate, proj.creationDate);
-      }).reduce(this.sum, 0) / IDPM_valid.length; // Mensual, Diferencia en dia creacion y asignación PM
+        return this.daysDifference(
+          proj.pm?.employee.availableDate,
+          proj.creationDate,
+        );
+      }).reduce(this.sum, 0) / IDPM_valid.length;
 
     const AP_approved = monthProjects.filter((proj) => proj.acceptDate);
     const AP_sent = monthProjects.filter((proj) => proj.sentDates?.length > 0);
@@ -607,10 +675,8 @@ export class ProjectService {
     const APPI_approved_first = monthProjects.filter(
       (proj) => proj.acceptDate && proj.sentDates.length === 1,
     );
-    const APPI_sent_first = monthProjects.filter(
-      (proj) => !proj.acceptDate && proj.sentDates.length === 1,
-    );
-    const APPI = (APPI_approved_first.length / APPI_sent_first.length) * 100; // Mensual, (Presupuestos aprobados en primera instancia/Presupuestos enviados en primera instancia)*100
+    const APPI_all_approved = monthProjects.filter((proj) => proj.acceptDate);
+    const APPI = (APPI_approved_first.length / APPI_all_approved.length) * 100; // Mensual, (Presupuestos aprobados en primera instancia/Presupuestos enviados en primera instancia)*100
 
     const MPP_proj = monthProjects.filter(
       (proj) => proj.state === STATE.ACCEPTED,
@@ -639,8 +705,20 @@ export class ProjectService {
     const IDNE = selectionTimeSum / monthSelection.length; // Mensual, Suma de tiempo de contratación de cada empleado ingresante/Total empleados ingresantes
     // Sum(resta tiempo finalizacion seleccion - tiempo entrada) / total personas con fecha finalizacion
 
-    const REPM_hadDelay = monthProjects.filter((proj) => proj.hadDelay);
-    const REPM_delayCancel = monthProjects.filter((proj) => proj.pmDelayCancel);
+    const REPM_projects = await this.prisma.project.findMany({
+      include: {
+        pm: {
+          include: {
+            employee: true,
+          },
+        },
+      },
+      where: {
+        OR: monthConditions,
+      },
+    });
+    const REPM_hadDelay = REPM_projects.filter((proj) => proj.hadDelay);
+    const REPM_delayCancel = REPM_projects.filter((proj) => proj.pmDelayCancel);
     // project.hadDelay == true si tuvo en algun momento delay y pmDelayCancel si cliente rechazo habiendo delay
     const REPM = (REPM_delayCancel.length / REPM_hadDelay.length) * 100; // Mensual, (Cantidad de veces que se rechazó el proyecto luego de informar el tiempo de demora/Cantidad de veces que se informó la demora)*100
 
@@ -681,38 +759,51 @@ export class ProjectService {
     ];
     const quarterProjects = await this.prisma.project.findMany({
       where: {
-        OR: quarterConditions,
+        AND: [{ state: { not: STATE.CANCELLED } }, { OR: quarterConditions }],
+      },
+      orderBy: {
+        creationDate: 'asc',
       },
     });
 
     const newClients = await Promise.all(
-      quarterProjects.filter(async (proj) => {
+      quarterProjects.map(async (proj) => {
         const sameClient = await this.prisma.project.findMany({
           where: {
             id: { not: proj.id },
             clientId: proj.clientId,
             creationDate: { lte: proj.creationDate },
+            state: { not: STATE.CANCELLED },
           },
         });
-        return sameClient.length === 0;
+        return {
+          include: sameClient.length === 0,
+          project: proj,
+        };
       }),
     );
 
-    const ICN = (newClients.length / quarterProjects.length) * 100; // Trimestral, Proyectos para clientes nuevos / Proyectos totales *100
+    const filtered = newClients.filter((itm) => itm.include);
+    const ICN = (filtered.length / quarterProjects.length) * 100; // Trimestral, Proyectos para clientes nuevos / Proyectos totales *100
 
     const oldClients = await Promise.all(
-      quarterProjects.filter(async (proj) => {
+      quarterProjects.map(async (proj) => {
         const sameClient = await this.prisma.project.findMany({
           where: {
             id: { not: proj.id },
             clientId: proj.clientId,
             creationDate: { lte: proj.creationDate },
+            state: { not: STATE.CANCELLED },
           },
         });
-        return sameClient.length > 0;
+        return {
+          include: sameClient.length > 0,
+          project: proj,
+        };
       }),
     );
-    const IR = (oldClients.length / quarterProjects.length) * 100; // Trimestral, Clientes que vuelven a contratar / clientes totales * 100
+    const filtered2 = oldClients.filter((itm) => itm.include);
+    const IR = (filtered2.length / quarterProjects.length) * 100; // Trimestral, Clientes que vuelven a contratar / clientes totales * 100
 
     return {
       IDPM: IDPM,
