@@ -586,15 +586,17 @@ export class ProjectService {
     let total = 0;
 
     //pm
-    const pm = await this.prisma.pM.findFirst({
-      select: {
-        employee: true,
-      },
-      where: {
-        id: project.pmId,
-      },
-    });
-    total = total + pm.employee.salary * monthFraction;
+    if (project.pmId) {
+      const pm = await this.prisma.pM.findFirst({
+        select: {
+          employee: true,
+        },
+        where: {
+          id: project.pmId,
+        },
+      });
+      total = total + pm.employee.salary * monthFraction;
+    }
 
     //devs
     const devs = await this.prisma.developer.findMany({
