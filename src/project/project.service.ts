@@ -544,9 +544,19 @@ export class ProjectService {
   }
 
   async clientAccepted(id: string) {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: id,
+      },
+    });
+
     return await this.prisma.project.update({
       where: { id: id },
-      data: { state: STATE.ACCEPTED, acceptDate: new Date() },
+      data: {
+        state: STATE.ACCEPTED,
+        acceptDate: new Date(),
+        finishedCost: await this.getProjectPrice(project),
+      },
     });
   }
 
@@ -579,6 +589,9 @@ export class ProjectService {
   }
 
   async getProjectPrice(project: Project) {
+    if (project.state === STATE.ACCEPTED && project.finishedCost)
+      return project.finishedCost;
+
     const days =
       (project.endDate.getTime() - project.startDate.getTime()) /
       (1000 * 3600 * 24);

@@ -52,6 +52,7 @@ model Project {
   acceptDate         DateTime?
   sentDates          DateTime[]
   rejectDates        DateTime[]
+  finishedCost       Float?
 }
 
 enum STATE {
