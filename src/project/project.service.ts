@@ -662,10 +662,12 @@ export class ProjectService {
     const IDPM_valid = monthProjects.filter((proj) => proj.pmAssignDate);
     const IDPM =
       IDPM_valid.map((proj) => {
-        return this.daysDifference(
-          proj.pm?.employee.availableDate,
-          proj.creationDate,
-        );
+        return proj.pm?.employee.availableDate > proj.creationDate
+          ? this.daysDifference(
+              proj.pm?.employee.availableDate,
+              proj.creationDate,
+            )
+          : 0;
       }).reduce(this.sum, 0) / IDPM_valid.length;
 
     const AP_approved = monthProjects.filter((proj) => proj.acceptDate);
