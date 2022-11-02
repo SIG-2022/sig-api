@@ -73,8 +73,8 @@ export class UserService {
     });
   }
 
-  register(userData: { email: string; password: string }) {
-    const existing = this.prisma.user.findFirst({
+  async register(userData: { email: string; password: string }) {
+    const existing = await this.prisma.user.findFirst({
       where: {
         email: userData.email,
       },
