@@ -73,7 +73,10 @@ export class UserService {
     });
   }
 
-  async register(userData: { email: string; password: string }) {
+  async register(
+    userData: { email: string; password: string },
+    admin: boolean,
+  ) {
     const existing = await this.prisma.user.findFirst({
       where: {
         email: userData.email,
@@ -81,7 +84,11 @@ export class UserService {
     });
     if (existing) throw new BadRequestException('Email en uso');
     return this.prisma.user.create({
-      data: userData,
+      data: {
+        ...userData,
+        role: admin ? 'ADMIN' : undefined,
+        enabled: admin ? true : undefined,
+      },
     });
   }
 }

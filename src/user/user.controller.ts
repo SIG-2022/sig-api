@@ -29,7 +29,17 @@ export class UserController {
 
   @Post('/register')
   async register(@Body() userData: { email: string; password: string }) {
-    return this.userService.register(userData);
+    return this.userService.register(userData, false);
+  }
+
+  @Post('/register-admin')
+  @UseGuards(JwtAuthGuard)
+  async registerAdmin(
+    @Request() req,
+    @Body() userData: { email: string; password: string },
+  ) {
+    if (req.user.role !== 'ADMIN') throw new BadRequestException();
+    return this.userService.register(userData, true);
   }
 
   @Get()
