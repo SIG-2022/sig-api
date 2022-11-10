@@ -135,6 +135,8 @@ export class ExcelParser {
       'tecnologias',
     ];
 
+    const speciality = ['especialidad', 'Especialidad'];
+
     let headers = {
       id: undefined,
       firstName: undefined,
@@ -151,6 +153,7 @@ export class ExcelParser {
       currentJob: undefined,
       selectionStep: undefined,
       selectionStart: undefined,
+      speciality: undefined,
     };
     worksheet.getRow(top).eachCell((header, col) => {
       switch (true) {
@@ -199,6 +202,9 @@ export class ExcelParser {
         case startDates.includes(header.value.toString().toLowerCase()):
           headers = { ...headers, selectionStart: col };
           break;
+        case speciality.includes(header.value.toString().toLowerCase()):
+          headers = { ...headers, speciality: col };
+          break;
         default:
           break;
       }
@@ -208,6 +214,8 @@ export class ExcelParser {
 
   async parsePM(employee, worksheetRow, headers, prisma) {
     const features = headers.features && worksheetRow.getCell(headers.features);
+    const speciality =
+      headers.speciality && worksheetRow.getCell(headers.speciality).value;
     const projectCount =
       headers.projectCount &&
       <number>worksheetRow.getCell(headers.projectCount).value;
@@ -219,6 +227,7 @@ export class ExcelParser {
       id: employee.id,
       features: featuresList,
       projectCount: projectCount,
+      speciality: speciality,
       employee: {
         connect: {
           id: employee.id,
@@ -231,6 +240,7 @@ export class ExcelParser {
       features: featuresList,
       projectCount: projectCount,
       employeeId: employee.id,
+      speciality: speciality,
     };
 
     await prisma.pM.upsert({

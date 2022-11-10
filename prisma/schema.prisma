@@ -99,6 +99,7 @@ model PM {
   features      String[]
   project       Project?
   projectCount  Int
+  speciality     String @default("Sin espcialidad")
 }
 
 model Developer {

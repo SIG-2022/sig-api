@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -104,11 +105,16 @@ export class ProjectController {
 
   @Get('pm')
   @UseGuards(JwtAuthGuard)
-  async listPms() {
+  async listPms(@Query('assigned') assigned: boolean) {
+    const whereStatement = !assigned
+      ? {
+          where: {
+            project: null,
+          },
+        }
+      : undefined;
     return this.projectService.pms({
-      where: {
-        project: null,
-      },
+      ...whereStatement,
       include: {
         employee: true,
         project: true,
@@ -118,11 +124,16 @@ export class ProjectController {
 
   @Get('dev')
   @UseGuards(JwtAuthGuard)
-  async listDevs() {
+  async listDevs(@Query('assigned') assigned: boolean) {
+    const whereStatement = !assigned
+      ? {
+          where: {
+            project: null,
+          },
+        }
+      : undefined;
     return this.projectService.devs({
-      where: {
-        project: null,
-      },
+      ...whereStatement,
       include: {
         employee: true,
         project: true,
