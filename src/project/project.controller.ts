@@ -66,13 +66,13 @@ export class ProjectController {
     return this.projectService.projects({
       include: {
         devs: {
-          include: { employee: true },
+          include: { employee: true, project: true },
         },
         underSelection: {
-          include: { employee: true },
+          include: { employee: true, project: true },
         },
         pm: {
-          include: { employee: true },
+          include: { employee: true, project: true },
         },
         client: {
           select: {
